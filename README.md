@@ -14,7 +14,7 @@ Use this with Leiningen:
 
 `[spectacles "0.2.0"]`
 
-## Basic Usage
+## Usage
 
 Setup the scene with a few specs:
 
@@ -51,7 +51,8 @@ The keys are checked against the `::targets` spec:
 ```clojure
 > (lens/get targets ::targets :WRONG)
 
-ExceptionInfo Invalid key :WRONG for spec :my-ns/targets (valid keys: #{:target-dims :filename})  clojure.core/ex-info (core.clj:4617)
+ExceptionInfo Invalid key :WRONG for spec :my-ns/targets
+  (valid keys: #{:target-dims :filename})
 ```
 
 Same goes for `get-in`:
@@ -135,6 +136,43 @@ Unhandled clojure.lang.ExceptionInfo
   Invalid key 2 for spec :spectacles.impl-test/the-cat (valid keys:
   #{0 1 :a :b})
 
+```
+
+### Composing lenses
+
+Let's add a bit more depth to the spec to explore how to compose
+lenses.
+
+```clojure
+(s/def ::deeper3 string?)
+(s/def ::deeper2 (s/keys :opt-un [::deeper3]))
+(s/def ::deeper1 (s/keys :opt-un [::deeper2]))
+
+;;redefine spec for ::target-dims
+(s/def ::target-dims (s/keys :req-un [::dims]
+                             :opt-un [::the-cat ::simple-map ::deeper1]))
+```
+
+To compose two lenses you can do:
+
+```clojure
+> (lens/comp [::targets :target-dims :deeper1] [::deeper1 :deeper2 :deeper3])
+
+[:my-fn/targets :target-dims :deeper1 :deeper2 :deeper3]
+```
+
+When composing, there is a check on whether the spec corresponding to
+the last key of the first lens matches to the target spec of the
+second lens. For instance, the first lens here points to the
+`:deeper1` key (which corresponds to the `:my-fn/deeper1` spec), but
+the second lens targets the `:my-fn/deeper2` spec (as you can see in
+the first element of the vector):
+
+```clojure
+> (lens/comp [::targets :target-dims :deeper1] [::deeper2 :deeper3])
+
+ExceptionInfo Cannot compose: last spec of lens1 (:my-fn/deeper1)
+  does not match first spec of lens2 (:my-fn/deeper2)
 ```
 
 ## License

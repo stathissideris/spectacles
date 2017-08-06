@@ -129,3 +129,12 @@
 (defn update-value-in [m lens fun & more]
   (let [v (get-value-in m lens)]
     (assoc-value-in m lens (apply fun v more))))
+
+(defn compose [lens1 lens2]
+  (let [last-spec (reduce key->spec (first lens1) (rest lens1))]
+    (if-not (= last-spec (first lens2))
+      (throw (ex-info (format "Cannot compose: last spec of lens1 (%s) does not match first spec of lens2 (%s)"
+                              (pr-str last-spec) (pr-str (first lens2)))
+                      {:lens1 lens1
+                       :lens2 lens2}))
+      (vec (concat lens1 (rest lens2))))))

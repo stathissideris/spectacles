@@ -16,8 +16,11 @@
 (s/def ::filename string?)
 (s/def ::dims (s/coll-of string?))
 (s/def ::simple-map (s/map-of string? number?))
+(s/def ::deeper3 string?)
+(s/def ::deeper2 (s/keys :opt-un [::deeper3]))
+(s/def ::deeper1 (s/keys :opt-un [::deeper2]))
 (s/def ::target-dims (s/keys :req-un [::dims]
-                             :opt-un [::the-cat ::simple-map]))
+                             :opt-un [::the-cat ::simple-map ::deeper1]))
 (s/def ::the-cat (s/cat :a string? :b number?))
 (s/def ::targets (s/keys :req-un [::filename ::target-dims]))
 (def targets {:filename "foo" :target-dims {:dims ["foo" "bar"]}})
@@ -108,3 +111,10 @@
            (update-value-in targets3 [::targets :target-dims :the-cat :b] inc)))
     (is (thrown? Exception (update-value-in targets3 [::targets :target-dims :the-cat 2] inc)))
     (is (thrown? Exception (update-value-in targets3 [::targets :target-dims :the-cat :c] inc)))))
+
+(deftest compose-test
+  (is (= [:spectacles.impl-test/targets :target-dims :deeper1 :deeper2 :deeper3]
+         (compose [::targets :target-dims :deeper1] [::deeper1 :deeper2 :deeper3])))
+  (is (= [:spectacles.impl-test/targets :target-dims :deeper1 :deeper2 :deeper3]
+         (compose [::targets :target-dims] [::target-dims :deeper1 :deeper2 :deeper3])))
+  (is (thrown? Exception (compose [::targets :target-dims :deeper1] [::deeper2 :deeper3]))))
