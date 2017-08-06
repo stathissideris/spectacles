@@ -86,6 +86,8 @@ Unhandled clojure.lang.ExceptionInfo
   :root-map {:filename "foo", :target-dims {:dims ["foo" "bar"]}}}
 ```
 
+### Changing data
+
 You can also `assoc`, `assoc-in`, `update-in` values into data
 structures, in which case the passed values are checked using spec
 before updating the structure:
