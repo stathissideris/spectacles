@@ -6,4 +6,7 @@
 (def get-in impl/get-value-in)
 
 (def assoc impl/assoc-value)
+(def assoc-in impl/assoc-value-in)
+
 (def update impl/update-value)
+(def update-in impl/update-value-in)

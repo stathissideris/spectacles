@@ -115,4 +115,13 @@
     (assoc-value m spec-name k (apply fun v more))))
 
 (defn assoc-value-in [m [spec-name & path] v]
-  )
+  (let [[k & ks] path]
+    (if ks
+      (let [child-spec (key->spec spec-name k)]
+        (assoc-value m spec-name k
+                     (assoc-value-in (get-value m spec-name k) (into [child-spec] ks) v)))
+      (assoc-value m spec-name k v))))
+
+(defn update-value-in [m lens fun & more]
+  (let [v (get-value-in m lens)]
+    (assoc-value-in m lens (apply fun v more))))

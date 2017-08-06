@@ -60,3 +60,43 @@
 (deftest update-value-test
   (is (= ["foobar" 10] (update-value ["foo" 10] ::the-cat :a #(str % "bar"))))
   (is (= ["foo" 11] (update-value ["foo" 10] ::the-cat :b inc))))
+
+(deftest assoc-value-in-test
+  (testing "for s/keys"
+    (is (= {:filename "foo", :target-dims {:dims ["zoo" "far"]}}
+           (assoc-value-in targets [::targets :target-dims :dims] ["zoo" "far"])))
+    (is (thrown? Exception (assoc-value-in targets [::targets :target-dims :dims] 10)))
+    (is (thrown? Exception (assoc-value-in targets [::targets :WRONG] 10)))
+    (is (thrown? Exception (assoc-value-in targets [::targets :target-dims :WRONG] 10))))
+
+  (testing "for s/keys and s/cat"
+    (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["bar" 10]}}
+           (assoc-value-in targets2 [::targets :target-dims :the-cat 0] "bar")))
+    (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["bar" 10]}}
+           (assoc-value-in targets2 [::targets :target-dims :the-cat :a] "bar")))
+    (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["foo" 20]}}
+           (assoc-value-in targets2 [::targets :target-dims :the-cat 1] 20)))
+    (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["foo" 20]}}
+           (assoc-value-in targets2 [::targets :target-dims :the-cat :b] 20)))
+    (is (thrown? Exception (assoc-value-in targets2 [::targets :target-dims :the-cat 2] 555)))
+    (is (thrown? Exception (assoc-value-in targets2 [::targets :target-dims :the-cat :c] 555)))))
+
+(deftest update-value-in-test
+  (testing "for s/keys"
+    (is (= {:filename "foo", :target-dims {:dims ["foo" "bar" "baz"]}}
+           (update-value-in targets [::targets :target-dims :dims] conj "baz")))
+    (is (thrown? Exception (update-value-in targets [::targets :target-dims :dims] conj 10)))
+    (is (thrown? Exception (update-value-in targets [::targets :WRONG] 10)))
+    (is (thrown? Exception (update-value-in targets [::targets :target-dims :WRONG] 10))))
+
+  (testing "for s/keys and s/cat"
+    (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["foobar" 10]}}
+           (update-value-in targets2 [::targets :target-dims :the-cat 0] str "bar")))
+    (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["foobar" 10]}}
+           (update-value-in targets2 [::targets :target-dims :the-cat :a] str "bar")))
+    (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["foo" 11]}}
+           (update-value-in targets2 [::targets :target-dims :the-cat 1] inc)))
+    (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["foo" 11]}}
+           (update-value-in targets2 [::targets :target-dims :the-cat :b] inc)))
+    (is (thrown? Exception (update-value-in targets2 [::targets :target-dims :the-cat 2] inc)))
+    (is (thrown? Exception (update-value-in targets2 [::targets :target-dims :the-cat :c] inc)))))
