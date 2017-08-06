@@ -8,6 +8,12 @@ Since Clojure spec is still in alpha, this library should also be
 considered to be in alpha -- so, highly experimental, very likely to
 change, possibly flawed.
 
+## Leiningen dependency
+
+Use this with Leiningen:
+
+`[spectacles "0.1.0"]`
+
 ## Basic Usage
 
 Setup the scene with a few specs:
