@@ -9,6 +9,9 @@
 (defmethod valid-keys :req-un [[_ k]] (->> k (map name) (map keyword)))
 (defmethod valid-keys :opt-un [[_ k]] (->> k (map name) (map keyword)))
 
+(defmethod valid-keys `s/map-of
+  [[_ key-pred _]] (eval key-pred))
+
 (defmethod valid-keys `s/keys
   [[_ & spec]]
   (set (mapcat valid-keys (partition 2 spec))))
@@ -28,6 +31,7 @@
 
 (defmulti get-value* (fn [_ spec _] (let [form (s/form spec)] (if (seq? form) (first form) form))))
 (defmethod get-value* `s/keys [m _ k] (get m k))
+(defmethod get-value* `s/map-of [m _ k] (get m k))
 (defmethod get-value* `s/cat [m spec k]
   (if (integer? k)
     (nth m k)
@@ -40,7 +44,7 @@
         valid-ks (valid-keys form)]
     (if-not (valid-ks k)
       (throw (ex-info (format "Invalid key %s for spec %s (valid keys: %s)"
-                              (str k) (str spec-name) (pr-str valid-ks))
+                              (pr-str k) (str spec-name) (pr-str valid-ks))
                       {:reason     :invalid-key
                        :collection m
                        :key        k

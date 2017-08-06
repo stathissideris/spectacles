@@ -12,7 +12,7 @@ change, possibly flawed.
 
 Use this with Leiningen:
 
-`[spectacles "0.1.0"]`
+`[spectacles "0.2.0"]`
 
 ## Basic Usage
 

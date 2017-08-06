@@ -1,4 +1,4 @@
-(defproject spectacles "0.1.0"
+(defproject spectacles "0.2.0"
   :description "Lenses for Clojure, checked at runtime using spec."
   :url "https://github.com/stathissideris/spectacles"
   :license {:name "Eclipse Public License"
