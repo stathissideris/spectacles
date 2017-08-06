@@ -65,7 +65,7 @@ Same goes for `get-in`:
 
 Note that the second argument of `get-in` is a vector whose first
 element is the spec of the data structure and the rest of the vector
-is the path into the key we are looking to retrieve. These two bit of
+is the path into the key we are looking to retrieve. These two bits of
 information are passed as a single vector so that you can define and
 pass lenses as parameters by passing a single value.
 
