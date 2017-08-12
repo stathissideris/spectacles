@@ -23,6 +23,7 @@
                              :opt-un [::the-cat ::simple-map ::deeper1]))
 (s/def ::the-cat (s/cat :a string? :b number?))
 (s/def ::targets (s/keys :req-un [::filename ::target-dims]))
+
 (def targets {:filename "foo" :target-dims {:dims ["foo" "bar"]}})
 
 (deftest get-value-test
@@ -51,7 +52,21 @@
   (testing "for s/keys"
     (is (= ["foo" "bar"] (get-value-in targets [::targets :target-dims :dims])))
     (is (thrown? Exception (get-value-in targets [::targets :WRONG])))
-    (is (thrown? Exception (get-value-in targets [::targets :target-dims :WRONG]))))
+    (is (thrown? Exception (get-value-in targets [::targets :target-dims :WRONG])))
+    (testing "with missing keys and invalid keys deeper"
+      (is
+       (thrown?
+        Exception
+        (get-value-in
+         {:filename "foo" :target-dims {:dims ["foo" "bar"] :the-cat ["foo" 10] :simple-map {"foo" 2 "bar" 3}}}
+         [::targets :target-dims :deeper1 :WRONG]))))
+    (testing "with missing keys and invalid keys deeper"
+      (is
+       (thrown?
+        Exception
+        (get-value-in
+         {:filename "foo" :target-dims {:dims ["foo" "bar"] :the-cat ["foo" 10] :simple-map {"foo" 2 "bar" 3}}}
+         [::targets :target-dims :deeper1 :deeper2 :WRONG])))))
 
   (testing "for s/keys and s/cat"
     (is (= "foo" (get-value-in targets2 [::targets :target-dims :the-cat 0])))
@@ -78,7 +93,14 @@
            (assoc-value-in targets [::targets :target-dims :dims] ["zoo" "far"])))
     (is (thrown? Exception (assoc-value-in targets [::targets :target-dims :dims] 10)))
     (is (thrown? Exception (assoc-value-in targets [::targets :WRONG] 10)))
-    (is (thrown? Exception (assoc-value-in targets [::targets :target-dims :WRONG] 10))))
+    (is (thrown? Exception (assoc-value-in targets [::targets :target-dims :WRONG] 10)))
+    (testing "with missing keys and invalid keys deeper"
+      (is
+       (thrown?
+        Exception
+        (assoc-value-in
+         {:filename "foo" :target-dims {:dims ["foo" "bar"] :the-cat ["foo" 10] :simple-map {"foo" 2 "bar" 3}}}
+         [::targets :target-dims :deeper1 :deeper2 :WRONG] 20)))))
 
   (testing "for s/keys and s/cat"
     (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["bar" 10]}}
