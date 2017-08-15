@@ -1,8 +1,9 @@
 (ns spectacles.impl
   (:require [clojure.spec.alpha :as s]))
 
-(defmulti valid-keys (fn [x] (if (seq? x) (first x) :default)))
+(defn- spec-form-type [x] (if (seq? x) (first x) :default))
 
+(defmulti valid-keys spec-form-type)
 (defmethod valid-keys :default [_] #{})
 (defmethod valid-keys :req [[_ k]] k)
 (defmethod valid-keys :opt [[_ k]] k)
@@ -29,9 +30,11 @@
   (set (concat (map first (partition 2 spec))
                (range (/ (count spec) 2)))))
 
-(defmulti get-value* (fn [_ spec _] (let [form (s/form spec)] (if (seq? form) (first form) form))))
+(defmulti get-value* (fn [_ spec _] (spec-form-type (s/form spec))))
 (defmethod get-value* `s/keys [m _ k] (get m k))
 (defmethod get-value* `s/map-of [m _ k] (get m k))
+(defmethod get-value* `s/and [m _ k] (if (integer? k) (nth m k) (get m k)))
+(defmethod get-value* `s/or [m _ k] (if (integer? k) (nth m k) (get m k)))
 (defmethod get-value* `s/cat [m spec k]
   (if (integer? k)
     (nth m k)
@@ -52,20 +55,34 @@
                        :valid-keys valid-ks}))
       (get-value* m spec k))))
 
-(defn- keys-spec-names [[_ & ks]]
-  (as-> ks $
+(defmulti keys->spec-names
+  "Takes a spec form and returns a map of unqualified keys to (fully
+  qualified) spec names."
+  spec-form-type)
+(defmethod keys->spec-names :default [_] #{})
+(defmethod keys->spec-names `s/cat [_] ::na)
+
+(defmethod keys->spec-names `s/keys
+  [[_ & spec]]
+  (as-> spec $
     (partition 2 $)
     (mapcat second $)
     (zipmap (map (comp keyword name) $) $)))
 
+(defmethod keys->spec-names `s/and
+  [[_ & specs]]
+  (apply merge (map keys->spec-names specs)))
+
+(defmethod keys->spec-names `s/or
+  [spec]
+  (apply merge (map keys->spec-names (drop 1 (take-nth 2 spec)))))
+
 (defn- key->spec [parent-spec spec-name]
   (if (and (keyword? spec-name) (namespace spec-name))
     spec-name
-    (let [form (-> parent-spec s/get-spec s/form)]
-      (cond (= `s/keys (first form))
-            (get (keys-spec-names form) spec-name)
-            (= `s/cat (first form))
-            ::na))))
+    (let [m (-> parent-spec s/get-spec s/form keys->spec-names)]
+      (if (= ::na m) m
+          (get m spec-name)))))
 
 (defn get-value-in [m [spec-name & path]]
   (second
@@ -81,9 +98,11 @@
                                   :root-map m)))))])
     [spec-name m] path)))
 
-(defmulti assoc-value* (fn [_ spec _ _] (let [form (s/form spec)] (if (seq? form) (first form) form))))
+(defmulti assoc-value* (fn [_ spec _ _] (spec-form-type (s/form spec))))
 (defmethod assoc-value* `s/keys [m _ k v]
   (assoc m k v))
+(defmethod assoc-value* `s/and [m _ k v] (if (integer? k) (assoc (vec m) k v) (assoc m k v)))
+(defmethod assoc-value* `s/or [m _ k v] (if (integer? k) (assoc (vec m) k v) (assoc m k v)))
 (defmethod assoc-value* `s/cat [m spec k v]
   (if (integer? k)
     (assoc (vec m) k v)
