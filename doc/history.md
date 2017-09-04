@@ -1,5 +1,9 @@
 # Version history
 
+## 0.3.3
+
+* Bugfixes to functionality of previous version
+
 ## 0.3.2
 
 * Support for spec that refer other specs
