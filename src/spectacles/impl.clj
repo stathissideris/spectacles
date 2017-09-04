@@ -65,8 +65,8 @@
   qualified) spec names."
   spec-form-type)
 (defmethod keys->spec-names :default [_] #{})
+(defmethod keys->spec-names :spec-ref [s] (-> s s/get-spec s/form keys->spec-names))
 (defmethod keys->spec-names `s/cat [_] ::na)
-
 (defmethod keys->spec-names `s/keys
   [[_ & spec]]
   (as-> spec $
@@ -104,6 +104,7 @@
     [spec-name m] path)))
 
 (defmulti assoc-value* (fn [_ spec _ _] (spec-form-type (s/form spec))))
+(defmethod assoc-value* :spec-ref [m spec k v] (assoc-value* m (-> spec s/get-spec s/form) k v))
 (defmethod assoc-value* `s/keys [m _ k v]
   (assoc m k v))
 (defmethod assoc-value* `s/and [m _ k v] (if (integer? k) (assoc (vec m) k v) (assoc m k v)))
