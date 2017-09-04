@@ -28,6 +28,17 @@
 
 (def targets {:filename "foo" :target-dims {:dims ["foo" "bar"]}})
 
+(s/def ::other-keys (s/keys :req-un [::the-cat ::deeper3 ::filename]))
+(s/def ::other (s/and ::other-keys (fn [x] (= 3 (count x)))))
+(s/def ::other2 ::other)
+
+(deftest get-valid-keys-test
+  (testing "for specs that refer to other specs"
+    (is (= #{:the-cat :filename :deeper3}
+           (@#'sut/valid-keys (-> ::other s/get-spec s/form))))
+    (is (= #{:the-cat :filename :deeper3}
+           (@#'sut/valid-keys (-> ::other2 s/get-spec s/form))))))
+
 (deftest get-value-test
   (is (s/valid? ::targets targets))
 

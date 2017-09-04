@@ -1,10 +1,15 @@
 (ns spectacles.impl
   (:require [clojure.spec.alpha :as s]))
 
-(defn- spec-form-type [x] (if (seq? x) (first x) :default))
+(defn- spec-form-type [x]
+  (cond (seq? x) (first x)
+        (and (keyword? x) (namespace x)) :spec-ref
+        :else :default))
 
 (defmulti valid-keys spec-form-type)
 (defmethod valid-keys :default [_] #{})
+
+(defmethod valid-keys :spec-ref [s] (-> s s/get-spec s/form valid-keys))
 (defmethod valid-keys :req [[_ k]] k)
 (defmethod valid-keys :opt [[_ k]] k)
 (defmethod valid-keys :req-un [[_ k]] (->> k (map name) (map keyword)))
