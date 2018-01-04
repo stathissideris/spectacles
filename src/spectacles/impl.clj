@@ -47,18 +47,20 @@
       (get c k))))
 
 (defn get-value [m spec-name k]
-  (let [spec     (s/get-spec spec-name)
-        form     (s/form spec)
-        valid-ks (valid-keys form)]
-    (if-not (valid-ks k)
-      (throw (ex-info (format "Invalid key %s for spec %s (valid keys: %s)"
-                              (pr-str k) (str spec-name) (pr-str valid-ks))
-                      {:reason     :invalid-key
-                       :collection m
-                       :key        k
-                       :spec       spec-name
-                       :valid-keys valid-ks}))
-      (get-value* m spec k))))
+  (if (= ::na spec-name)
+    (get m k)
+    (let [spec     (s/get-spec spec-name)
+          form     (s/form spec)
+          valid-ks (valid-keys form)]
+      (if-not (valid-ks k)
+        (throw (ex-info (format "Invalid key %s for spec %s (valid keys: %s)"
+                                (pr-str k) (str spec-name) (pr-str valid-ks))
+                        {:reason     :invalid-key
+                         :collection m
+                         :key        k
+                         :spec       spec-name
+                         :valid-keys valid-ks}))
+        (get-value* m spec k)))))
 
 (defmulti keys->spec-names
   "Takes a spec form and returns a map of unqualified keys to (fully
@@ -67,6 +69,7 @@
 (defmethod keys->spec-names :default [_] #{})
 (defmethod keys->spec-names :spec-ref [s] (-> s s/get-spec s/form keys->spec-names))
 (defmethod keys->spec-names `s/cat [_] ::na)
+(defmethod keys->spec-names `s/map-of [_] ::na)
 (defmethod keys->spec-names `s/keys
   [[_ & spec]]
   (as-> spec $
@@ -83,11 +86,16 @@
   (apply merge (map keys->spec-names (drop 1 (take-nth 2 spec)))))
 
 (defn- key->spec [parent-spec spec-name]
-  (if (and (keyword? spec-name) (namespace spec-name))
-    spec-name
-    (let [m (-> parent-spec s/get-spec s/form keys->spec-names)]
-      (if (= ::na m) m
-          (get m spec-name)))))
+  (cond (= parent-spec ::na)
+        ::na
+
+        (and (keyword? spec-name) (namespace spec-name))
+        spec-name
+
+        :else
+        (let [m (-> parent-spec s/get-spec s/form keys->spec-names)]
+          (if (= ::na m) m
+              (get m spec-name)))))
 
 (defn get-value-in [m [spec-name & path]]
   (second

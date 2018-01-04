@@ -1,5 +1,11 @@
 # Version history
 
+## 0.3.4
+
+* Fix
+  [issue 4](https://github.com/stathissideris/spectacles/issues/4):
+  get-in would fail when path included non-keyword keys
+
 ## 0.3.3
 
 * Bugfixes to functionality of previous version

@@ -69,6 +69,44 @@
     (is (= "bar" (get-value other-value ::other2 :filename)))
     (is (= ["foo" 4] (get-value other-value ::other2 :the-cat)))))
 
+(s/def ::top2 (s/keys :req-un [::parent ::children]))
+(s/def ::parent string?)
+(s/def ::children (s/map-of keyword? ::child))
+(s/def ::child (s/keys :req-un [::age]))
+(s/def ::age number?)
+
+(s/def ::top3 (s/keys :req-un [::parent3 ::children3]))
+(s/def ::parent3 string?)
+(s/def ::children3 (s/map-of integer? ::child3))
+(s/def ::child3 (s/keys :req-un [::age3]))
+(s/def ::age3 number?)
+
+;; see issue https://github.com/stathissideris/spectacles/issues/4
+(deftest get-in-with-map-of-in-path
+  (testing "string keys in path"
+   (let [m {:parent   "fred"
+            :children {:bert  {:age 1}
+                       :sam   {:age 3}
+                       :fiona {:age 6}}}]
+     (is (= {:bert {:age 1}, :sam {:age 3}, :fiona {:age 6}}
+            (get-value-in m [::top2 :children])))
+     (is (= {:age 1} (get-value-in m [::top2 :children :bert])))
+     (is (= 1 (get-value-in m [::top2 :children :bert :age])))
+
+     (is (thrown? Exception (get-value-in m [::top2 :children "bert" :age])))))
+  (testing "integer keys in path"
+   (let [m {:parent3   "fred"
+            :children3 {1 {:age3 1}
+                        2 {:age3 3}
+                        3 {:age3 6}}}]
+     (is (= {1 {:age3 1}, 2 {:age3 3}, 3 {:age3 6}}
+            (get-value-in m [::top3 :children3])))
+     (is (= {:age3 3}
+            (get-value-in m [::top3 :children3 2])))
+     (is (= 3 (get-value-in m [::top3 :children3 2 :age3])))
+
+     (is (thrown? Exception (get-value-in m [::top3 :children3 "2" :age3]))))))
+
 (def targets2
   {:filename "foo" :target-dims {:dims ["foo" "bar"] :the-cat ["foo" 10] :simple-map {"foo" 2 "bar" 3}}})
 
