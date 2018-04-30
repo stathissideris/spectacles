@@ -15,8 +15,14 @@
 (defmethod valid-keys :req-un [[_ k]] (->> k (map name) (map keyword)))
 (defmethod valid-keys :opt-un [[_ k]] (->> k (map name) (map keyword)))
 
-(defmethod valid-keys `s/map-of
-  [[_ key-pred _]] (eval key-pred))
+#?(:clj
+   (defmethod valid-keys `s/map-of
+     [[_ key-pred _]] (eval key-pred))
+
+   ;;this is not supported in cljs
+   :cljs
+   (defmethod valid-keys `s/map-of
+     [[_ key-pred _]] any?))
 
 (defmethod valid-keys `s/keys
   [[_ & spec]]
@@ -104,7 +110,8 @@
       [(key->spec spec-name k)
        (try
          (get-value mm spec-name k)
-         (catch clojure.lang.ExceptionInfo e
+         (catch #?(:clj clojure.lang.ExceptionInfo
+                   :cljs cljs.core.ExceptionInfo) e
            (throw (ex-info (.getMessage e)
                            (assoc (ex-data e)
                                   :path (vec path)

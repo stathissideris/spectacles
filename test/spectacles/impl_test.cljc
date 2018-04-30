@@ -1,6 +1,9 @@
 (ns spectacles.impl-test
-  (:require [spectacles.impl :refer :all :as sut]
-            [clojure.test :refer :all]
+  (:require [spectacles.impl :as sut :refer [valid-keys get-value get-value-in
+                                             assoc-value update-value
+                                             assoc-value-in update-value-in
+                                             compose]]
+            [clojure.test :refer [deftest testing is run-tests]]
             [clojure.spec.alpha :as s]))
 
 (deftest valid-keys-test
@@ -48,17 +51,17 @@
 
   (testing "for s/keys"
     (is (= "foo" (get-value targets ::targets :filename)))
-    (is (thrown? Exception (get-value targets ::targets :filo))))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (get-value targets ::targets :filo))))
 
   (testing "for s/cat"
     (testing "using names"
       (is (= "foo" (get-value ["foo" 10] ::the-cat :a)))
       (is (= 10 (get-value ["foo" 10] ::the-cat :b)))
-      (is (thrown? Exception (get-value ["foo" 10] ::the-cat :c))))
+      (is (thrown? #?(:clj Exception :cljs js/Object) (get-value ["foo" 10] ::the-cat :c))))
     (testing "using indexes"
       (is (= "foo" (get-value ["foo" 10] ::the-cat 0)))
       (is (= 10 (get-value ["foo" 10] ::the-cat 1)))
-      (is (thrown? Exception (get-value ["foo" 10] ::the-cat 3)))))
+      (is (thrown? #?(:clj Exception :cljs js/Object) (get-value ["foo" 10] ::the-cat 3)))))
 
   (testing "for specs that refer to other specs"
     (is (= "foo" (get-value other-value ::other :deeper3)))
@@ -93,7 +96,8 @@
      (is (= {:age 1} (get-value-in m [::top2 :children :bert])))
      (is (= 1 (get-value-in m [::top2 :children :bert :age])))
 
-     (is (thrown? Exception (get-value-in m [::top2 :children "bert" :age])))))
+     ;;not supported in cljs
+     #?(:clj (is (thrown? #?(:clj Exception :cljs js/Object) (get-value-in m [::top2 :children "bert" :age]))))))
   (testing "integer keys in path"
    (let [m {:parent3   "fred"
             :children3 {1 {:age3 1}
@@ -105,7 +109,8 @@
             (get-value-in m [::top3 :children3 2])))
      (is (= 3 (get-value-in m [::top3 :children3 2 :age3])))
 
-     (is (thrown? Exception (get-value-in m [::top3 :children3 "2" :age3]))))))
+     ;;not supported in cljs
+     #?(:clj (is (thrown? #?(:clj Exception :cljs js/Object) (get-value-in m [::top3 :children3 "2" :age3])))))))
 
 (def targets2
   {:filename "foo" :target-dims {:dims ["foo" "bar"] :the-cat ["foo" 10] :simple-map {"foo" 2 "bar" 3}}})
@@ -115,19 +120,19 @@
 
   (testing "for s/keys"
     (is (= ["foo" "bar"] (get-value-in targets [::targets :target-dims :dims])))
-    (is (thrown? Exception (get-value-in targets [::targets :WRONG])))
-    (is (thrown? Exception (get-value-in targets [::targets :target-dims :WRONG])))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (get-value-in targets [::targets :WRONG])))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (get-value-in targets [::targets :target-dims :WRONG])))
     (testing "with missing keys and invalid keys deeper"
       (is
        (thrown?
-        Exception
+        #?(:clj Exception :cljs js/Object)
         (get-value-in
          {:filename "foo" :target-dims {:dims ["foo" "bar"] :the-cat ["foo" 10] :simple-map {"foo" 2 "bar" 3}}}
          [::targets :target-dims :deeper1 :WRONG]))))
     (testing "with missing keys and invalid keys deeper"
       (is
        (thrown?
-        Exception
+        #?(:clj Exception :cljs js/Object)
         (get-value-in
          {:filename "foo" :target-dims {:dims ["foo" "bar"] :the-cat ["foo" 10] :simple-map {"foo" 2 "bar" 3}}}
          [::targets :target-dims :deeper1 :deeper2 :WRONG])))))
@@ -137,12 +142,14 @@
     (is (= "foo" (get-value-in targets2 [::targets :target-dims :the-cat :a])))
     (is (= 10 (get-value-in targets2 [::targets :target-dims :the-cat 1])))
     (is (= 10 (get-value-in targets2 [::targets :target-dims :the-cat :b])))
-    (is (thrown? Exception (get-value-in targets2 [::targets :target-dims :the-cat 2])))
-    (is (thrown? Exception (get-value-in targets2 [::targets :target-dims :the-cat :c]))))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (get-value-in targets2 [::targets :target-dims :the-cat 2])))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (get-value-in targets2 [::targets :target-dims :the-cat :c]))))
 
   (testing "for s/map-of"
     (is (= 2 (get-value-in targets2 [::targets :target-dims :simple-map "foo"])))
-    (is (thrown? Exception (get-value-in targets2 [::targets :target-dims :simple-map 10]))))
+
+    ;;not supported in cljs
+    #?(:clj (is (thrown? #?(:clj Exception :cljs js/Object) (get-value-in targets2 [::targets :target-dims :simple-map 10])))))
 
   (testing "for s/and and s/or"
     (is (= "pretty deep"
@@ -208,13 +215,13 @@
   (testing "for s/keys"
     (is (= {:filename "foo", :target-dims {:dims ["zoo" "far"]}}
            (assoc-value-in targets [::targets :target-dims :dims] ["zoo" "far"])))
-    (is (thrown? Exception (assoc-value-in targets [::targets :target-dims :dims] 10)))
-    (is (thrown? Exception (assoc-value-in targets [::targets :WRONG] 10)))
-    (is (thrown? Exception (assoc-value-in targets [::targets :target-dims :WRONG] 10)))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (assoc-value-in targets [::targets :target-dims :dims] 10)))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (assoc-value-in targets [::targets :WRONG] 10)))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (assoc-value-in targets [::targets :target-dims :WRONG] 10)))
     (testing "with missing keys and invalid keys deeper"
       (is
        (thrown?
-        Exception
+        #?(:clj Exception :cljs js/Object)
         (assoc-value-in
          {:filename "foo" :target-dims {:dims ["foo" "bar"] :the-cat ["foo" 10] :simple-map {"foo" 2 "bar" 3}}}
          [::targets :target-dims :deeper1 :deeper2 :WRONG] 20)))))
@@ -228,8 +235,8 @@
            (assoc-value-in targets3 [::targets :target-dims :the-cat 1] 20)))
     (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["foo" 20]}}
            (assoc-value-in targets3 [::targets :target-dims :the-cat :b] 20)))
-    (is (thrown? Exception (assoc-value-in targets3 [::targets :target-dims :the-cat 2] 555)))
-    (is (thrown? Exception (assoc-value-in targets3 [::targets :target-dims :the-cat :c] 555))))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (assoc-value-in targets3 [::targets :target-dims :the-cat 2] 555)))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (assoc-value-in targets3 [::targets :target-dims :the-cat :c] 555))))
 
   (testing "for s/and and s/or"
     (is (= {:filename    "foo"
@@ -286,9 +293,9 @@
   (testing "for s/keys"
     (is (= {:filename "foo", :target-dims {:dims ["foo" "bar" "baz"]}}
            (update-value-in targets [::targets :target-dims :dims] conj "baz")))
-    (is (thrown? Exception (update-value-in targets [::targets :target-dims :dims] conj 10)))
-    (is (thrown? Exception (update-value-in targets [::targets :WRONG] 10)))
-    (is (thrown? Exception (update-value-in targets [::targets :target-dims :WRONG] 10))))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (update-value-in targets [::targets :target-dims :dims] conj 10)))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (update-value-in targets [::targets :WRONG] 10)))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (update-value-in targets [::targets :target-dims :WRONG] 10))))
 
   (testing "for s/keys and s/cat"
     (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["foobar" 10]}}
@@ -299,8 +306,8 @@
            (update-value-in targets3 [::targets :target-dims :the-cat 1] inc)))
     (is (= {:filename "foo", :target-dims {:dims ["foo" "bar"], :the-cat ["foo" 11]}}
            (update-value-in targets3 [::targets :target-dims :the-cat :b] inc)))
-    (is (thrown? Exception (update-value-in targets3 [::targets :target-dims :the-cat 2] inc)))
-    (is (thrown? Exception (update-value-in targets3 [::targets :target-dims :the-cat :c] inc))))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (update-value-in targets3 [::targets :target-dims :the-cat 2] inc)))
+    (is (thrown? #?(:clj Exception :cljs js/Object) (update-value-in targets3 [::targets :target-dims :the-cat :c] inc))))
 
   (testing "for specs that refer to other specs"
     (is (= {:deeper3 "foobar", :filename "bar", :the-cat ["foo" 4]}
@@ -326,4 +333,4 @@
          (compose [::targets :target-dims :deeper1] [::deeper1 :deeper2 :deeper3])))
   (is (= [:spectacles.impl-test/targets :target-dims :deeper1 :deeper2 :deeper3]
          (compose [::targets :target-dims] [::target-dims :deeper1 :deeper2 :deeper3])))
-  (is (thrown? Exception (compose [::targets :target-dims :deeper1] [::deeper2 :deeper3]))))
+  (is (thrown? #?(:clj Exception :cljs js/Object) (compose [::targets :target-dims :deeper1] [::deeper2 :deeper3]))))
