@@ -8,11 +8,13 @@ Since Clojure spec is still in alpha, this library should also be
 considered to be in alpha -- so, highly experimental, very likely to
 change, possibly flawed.
 
+This library works in both Clojure and ClojureScript.
+
 ## Leiningen dependency
 
 Use this with Leiningen:
 
-`[spectacles "0.3.4"]`
+`[spectacles "0.3.5"]`
 
 ## Usage
 
@@ -175,9 +177,43 @@ ExceptionInfo Cannot compose: last spec of lens1 (:my-fn/deeper1)
   does not match first spec of lens2 (:my-fn/deeper2)
 ```
 
+## ClojureScript differences
+
+The ClojureScript version of the library behaves slightly differently
+to the Clojure version. Specifically, none of the operations will be
+able to check the key predicate of `map-of` specs. This is because
+this functionality depends on running `eval` on the form of `map-of`
+and ClojureScript doesn't have eval.
+
+## Developers
+
+Run Clojure unit tests with:
+
+```
+lein test
+```
+
+Run ClojureScript unit tests with (default setup uses node):
+
+```
+lein doo
+```
+
+Run self-hosted ClojureScript unit tests with:
+
+```
+lein tach lumo
+```
+
+and
+
+```
+lein tach planck
+```
+
 ## License
 
-Copyright © 2017 Stathis Sideris
+Copyright © 2017-2018 Stathis Sideris
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
