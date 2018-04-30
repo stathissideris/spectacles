@@ -7,10 +7,13 @@
                  [org.clojure/clojurescript "1.10.238"]]
 
   :plugins [[lein-cljsbuild "1.1.7"]
-            [lein-doo "0.1.10"]]
+            [lein-doo "0.1.10"]
+            [lein-tach "1.0.0"]]
 
   :doo {:build "test"
         :alias {:default [:node]}}
+
+  :tach {:test-runner-ns spectacles.cljs-self-test-runner}
 
   :cljsbuild {:builds [{:id "test"
                         :source-paths ["src" "test"]
