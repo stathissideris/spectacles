@@ -1,5 +1,9 @@
 # Version history
 
+## 0.3.5
+
+* Clojurescript support
+
 ## 0.3.4
 
 * Fix
