@@ -31,6 +31,10 @@
   [[_ & spec]]
   (set (mapcat valid-keys (partition 2 spec))))
 
+(defmethod valid-keys 'keys ;; so that it works with spell-spec.alpha/strict-keys
+  [[_ & spec]]
+  (set (mapcat valid-keys (partition 2 spec))))
+
 (defmethod valid-keys `s/and
   [[_ & spec]]
   (set (mapcat valid-keys spec)))
@@ -46,6 +50,7 @@
 
 (defmulti get-value* (fn [_ spec _] (spec-form-type (s/form spec))))
 (defmethod get-value* `s/keys [m _ k] (get m k))
+(defmethod get-value* 'keys [m _ k] (get m k)) ;; so that it works with spell-spec.alpha/strict-keys
 (defmethod get-value* `s/map-of [m _ k] (get m k))
 (defmethod get-value* `s/and [m _ k] (if (integer? k) (nth m k) (get m k)))
 (defmethod get-value* `s/or [m _ k] (if (integer? k) (nth m k) (get m k)))
@@ -80,6 +85,12 @@
 (defmethod keys->spec-names `s/cat [_] ::na)
 (defmethod keys->spec-names `s/map-of [_] ::na)
 (defmethod keys->spec-names `s/keys
+  [[_ & spec]]
+  (as-> spec $
+    (partition 2 $)
+    (mapcat second $)
+    (zipmap (map (comp keyword name) $) $)))
+(defmethod keys->spec-names 'keys ;; so that it works with spell-spec.alpha/strict-keys
   [[_ & spec]]
   (as-> spec $
     (partition 2 $)
@@ -123,8 +134,8 @@
 
 (defmulti assoc-value* (fn [_ spec _ _] (spec-form-type (s/form spec))))
 (defmethod assoc-value* :spec-ref [m spec k v] (assoc-value* m (-> spec s/get-spec s/form) k v))
-(defmethod assoc-value* `s/keys [m _ k v]
-  (assoc m k v))
+(defmethod assoc-value* `s/keys [m _ k v] (assoc m k v))
+(defmethod assoc-value* 'keys [m _ k v] (assoc m k v)) ;; so that it works with spell-spec.alpha/strict-keys
 (defmethod assoc-value* `s/and [m _ k v] (if (integer? k) (assoc (vec m) k v) (assoc m k v)))
 (defmethod assoc-value* `s/or [m _ k v] (if (integer? k) (assoc (vec m) k v) (assoc m k v)))
 (defmethod assoc-value* `s/cat [m spec k v]
